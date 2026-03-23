@@ -26,6 +26,13 @@ body {
   transition: height 0.1s ease;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .waveform-bar {
+    animation: none !important;
+    height: 8px !important;
+  }
+}
+
 /* Scrollbar styling for results panel */
 .results-scroll::-webkit-scrollbar {
   width: 4px;
