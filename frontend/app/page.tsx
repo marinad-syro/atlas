@@ -48,9 +48,9 @@ export default function Home() {
   const handleReset = () => setTripCard(EMPTY_TRIP);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col sm:flex-row h-screen overflow-hidden">
       {/* Left panel: voice conversation */}
-      <div className="w-2/5 min-w-[340px] border-r border-white/10">
+      <div className="sm:w-2/5 sm:min-w-[340px] sm:border-r sm:border-b-0 border-b border-white/10">
         <VoicePanel onTripSectionUpdate={handleTripSectionUpdate} onReset={handleReset} />
       </div>
 
