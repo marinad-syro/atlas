@@ -16,6 +16,9 @@ venv/
 # OS
 .DS_Store
 
+# gstack
+.gstack/
+
 # markdowns
 AGENT_SETUP.md
 CLAUDE.md
