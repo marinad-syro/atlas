@@ -300,12 +300,12 @@ export default function VoicePanel({ onTripSectionUpdate, onReset }: VoicePanelP
             "Mountains, Japan, two weeks, cultural experiences",
             "City break, Southeast Asia, street food, under $2k",
           ].map((hint) => (
-            <div
+            <p
               key={hint}
-              className="text-sm text-gray-400 bg-white/5 rounded-lg px-4 py-2 border border-white/5"
+              className="text-sm text-gray-400 italic pl-1"
             >
-              {hint}
-            </div>
+              "{hint}"
+            </p>
           ))}
         </div>
       )}
