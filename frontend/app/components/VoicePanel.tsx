@@ -247,8 +247,8 @@ export default function VoicePanel({ onTripSectionUpdate, onReset }: VoicePanelP
             key={i}
             className={`waveform-bar ${isStarted ? anim : ""}`}
             style={{
-              height: isStarted ? undefined : "4px",
-              opacity: isStarted ? 1 : 0.3,
+              height: isStarted ? undefined : "8px",
+              opacity: isStarted ? 1 : 0.2,
             }}
           />
         ))}
