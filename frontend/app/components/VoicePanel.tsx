@@ -277,7 +277,7 @@ export default function VoicePanel({ onTripSectionUpdate, onReset }: VoicePanelP
         {isStarted && (
           <button
             onClick={handleReset}
-            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
           >
             Reset trip
           </button>
