@@ -9,11 +9,12 @@ For development, expose with ngrok:
   ngrok http 8000
 """
 
+import json
 import logging
 import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -95,7 +96,7 @@ def suggest_destination(req: SuggestDestinationRequest):
     log.info("suggest_destination: preferences=%r", req.preferences)
     result = handle_suggest_destination(req.preferences)
     log.info("suggest_destination: returning %d destination(s)", len(result.get("destinations", [])))
-    return result
+    return PlainTextResponse(json.dumps(result))
 
 
 @app.post("/tools/find_flights")
@@ -109,7 +110,7 @@ def find_flights(req: FindFlightsRequest):
         req.passengers,
     )
     log.info("find_flights: returning %d option(s)", len(result.get("options", [])))
-    return result
+    return PlainTextResponse(json.dumps(result))
 
 
 @app.post("/tools/find_hotels")
@@ -117,7 +118,7 @@ def find_hotels(req: FindHotelsRequest):
     log.info("find_hotels: %s  %s–%s", req.destination, req.check_in, req.check_out)
     result = handle_find_hotels(req.destination, req.check_in, req.check_out)
     log.info("find_hotels: returning %d hotel(s)", len(result.get("hotels", [])))
-    return result
+    return PlainTextResponse(json.dumps(result))
 
 
 @app.post("/tools/find_activities")
@@ -125,7 +126,7 @@ def find_activities(req: FindActivitiesRequest):
     log.info("find_activities: %s  prefs=%r", req.destination, req.preferences)
     result = handle_find_activities(req.destination, req.preferences)
     log.info("find_activities: returning %d activity(s)", len(result.get("activities", [])))
-    return result
+    return PlainTextResponse(json.dumps(result))
 
 
 # ─── 422 validation error handler ─────────────────────────────────────────────

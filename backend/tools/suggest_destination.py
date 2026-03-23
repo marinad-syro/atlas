@@ -68,28 +68,15 @@ def handle_suggest_destination(preferences: str) -> dict:
 
         destinations = [
             {
-                "name": _item_field(item, "title", "Unknown destination"),
-                "summary": _item_field(item, "description", "No description available."),
-                "source_url": _item_field(item, "url"),
+                "name": _item_field(item, "title", "Unknown destination")[:60],
+                "summary": _item_field(item, "description", "No description available.")[:100],
+                "source_url": _item_field(item, "url")[:80],
             }
-            for item in web_results[:3]
+            for item in web_results[:2]
         ]
-
-        # Scrape the top result for richer context
-        detailed_info = ""
-        if web_results:
-            top_url = _item_field(web_results[0], "url")
-            if top_url:
-                try:
-                    scrape_raw = firecrawl.scrape(top_url, formats=["markdown"])
-                    markdown = _get_markdown(scrape_raw)
-                    detailed_info = markdown[:2000]
-                except Exception:
-                    pass  # Scrape failure is non-fatal; search results are enough
 
         response = {
             "destinations": destinations,
-            "detailed_info": detailed_info,
         }
         cache.set("suggest_destination", preferences, response)
         return response

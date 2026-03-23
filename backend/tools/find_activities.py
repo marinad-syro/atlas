@@ -66,28 +66,15 @@ def handle_find_activities(destination: str, preferences: str = "") -> dict:
 
         activities = [
             {
-                "name": _item_field(item, "title", f"Activity in {destination}"),
-                "description": _item_field(item, "description"),
-                "source_url": _item_field(item, "url"),
+                "name": _item_field(item, "title", f"Activity in {destination}")[:60],
+                "description": _item_field(item, "description")[:80],
+                "source_url": _item_field(item, "url")[:80],
             }
-            for item in web_results[:5]
+            for item in web_results[:3]
         ]
-
-        # Scrape top result for a richer list
-        detailed_info = ""
-        if web_results:
-            top_url = _item_field(web_results[0], "url")
-            if top_url:
-                try:
-                    scrape_raw = firecrawl.scrape(top_url, formats=["markdown"])
-                    markdown = _get_markdown(scrape_raw)
-                    detailed_info = markdown[:2000]
-                except Exception:
-                    pass
 
         response = {
             "activities": activities,
-            "detailed_info": detailed_info,
         }
         cache.set("find_activities", cache_key, response)
         return response

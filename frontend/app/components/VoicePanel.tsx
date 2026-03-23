@@ -109,10 +109,17 @@ export default function VoicePanel({ onTripSectionUpdate, onReset }: VoicePanelP
         section: string;
         data: unknown;
       }) => {
+        console.log("show_trip_section called:", section, `(${typeof data === "string" ? data.length : "?"} chars)`, data);
         const valid = ["destination", "flights", "hotels", "activities"];
         if (!valid.includes(section)) return "unknown section";
         // data arrives as a JSON string (EL client tool params don't support object type)
-        const parsed = typeof data === "string" ? JSON.parse(data) : data;
+        let parsed: unknown;
+        try {
+          parsed = typeof data === "string" ? JSON.parse(data) : data;
+        } catch (e) {
+          console.error("show_trip_section: failed to parse data", e, data);
+          return "parse error";
+        }
         onTripSectionUpdate(section, parsed);
         return "displayed";
       },
