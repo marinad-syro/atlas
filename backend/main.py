@@ -9,12 +9,25 @@ For development, expose with ngrok:
   ngrok http 8000
 """
 
-from fastapi import FastAPI
+import json
+import logging
+import time
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# ─── Logging ───────────────────────────────────────────────────────────────────
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger("tripagent")
 
 # Tool handlers are imported after load_dotenv() so env vars are available
 from tools.suggest_destination import handle_suggest_destination
@@ -30,6 +43,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ─── Request logging middleware ────────────────────────────────────────────────
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.time()
+    # Reading body here caches it in Starlette so downstream handlers can still read it
+    body = await request.body()
+    log.info("→ %s %s  body=%s", request.method, request.url.path, body.decode()[:500] or "(empty)")
+    response = await call_next(request)
+    elapsed = (time.time() - start) * 1000
+    log.info("← %s %s  status=%d  %.0fms", request.method, request.url.path, response.status_code, elapsed)
+    return response
 
 
 # ─── Request models ────────────────────────────────────────────────────────────
@@ -66,25 +93,55 @@ def health():
 
 @app.post("/tools/suggest_destination")
 def suggest_destination(req: SuggestDestinationRequest):
-    return handle_suggest_destination(req.preferences)
+    log.info("suggest_destination: preferences=%r", req.preferences)
+    result = handle_suggest_destination(req.preferences)
+    log.info("suggest_destination: returning %d destination(s)", len(result.get("destinations", [])))
+    return PlainTextResponse(json.dumps(result))
 
 
 @app.post("/tools/find_flights")
 def find_flights(req: FindFlightsRequest):
-    return handle_find_flights(
+    log.info("find_flights: %s → %s  %s–%s", req.origin_city, req.destination_city, req.depart_date, req.return_date)
+    result = handle_find_flights(
         req.destination_city,
         req.origin_city,
         req.depart_date,
         req.return_date,
         req.passengers,
     )
+    log.info("find_flights: returning %d option(s)", len(result.get("options", [])))
+    return PlainTextResponse(json.dumps(result))
 
 
 @app.post("/tools/find_hotels")
 def find_hotels(req: FindHotelsRequest):
-    return handle_find_hotels(req.destination, req.check_in, req.check_out)
+    log.info("find_hotels: %s  %s–%s", req.destination, req.check_in, req.check_out)
+    result = handle_find_hotels(req.destination, req.check_in, req.check_out)
+    log.info("find_hotels: returning %d hotel(s)", len(result.get("hotels", [])))
+    return PlainTextResponse(json.dumps(result))
 
 
 @app.post("/tools/find_activities")
 def find_activities(req: FindActivitiesRequest):
-    return handle_find_activities(req.destination, req.preferences)
+    log.info("find_activities: %s  prefs=%r", req.destination, req.preferences)
+    result = handle_find_activities(req.destination, req.preferences)
+    log.info("find_activities: returning %d activity(s)", len(result.get("activities", [])))
+    return PlainTextResponse(json.dumps(result))
+
+
+# ─── 422 validation error handler ─────────────────────────────────────────────
+# ElevenLabs tool calls will return 422 if field names don't match the model.
+# Log these so mismatches are immediately visible in the terminal.
+
+from fastapi.exceptions import RequestValidationError
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    body = await request.body()
+    log.error(
+        "422 validation error on %s %s\n  body: %s\n  errors: %s",
+        request.method, request.url.path,
+        body.decode()[:500],
+        exc.errors(),
+    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})

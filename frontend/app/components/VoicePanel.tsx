@@ -109,10 +109,17 @@ export default function VoicePanel({ onTripSectionUpdate, onReset }: VoicePanelP
         section: string;
         data: unknown;
       }) => {
+        console.log("show_trip_section called:", section, `(${typeof data === "string" ? data.length : "?"} chars)`, data);
         const valid = ["destination", "flights", "hotels", "activities"];
         if (!valid.includes(section)) return "unknown section";
         // data arrives as a JSON string (EL client tool params don't support object type)
-        const parsed = typeof data === "string" ? JSON.parse(data) : data;
+        let parsed: unknown;
+        try {
+          parsed = typeof data === "string" ? JSON.parse(data) : data;
+        } catch (e) {
+          console.error("show_trip_section: failed to parse data", e, data);
+          return "parse error";
+        }
         onTripSectionUpdate(section, parsed);
         return "displayed";
       },
@@ -240,8 +247,8 @@ export default function VoicePanel({ onTripSectionUpdate, onReset }: VoicePanelP
             key={i}
             className={`waveform-bar ${isStarted ? anim : ""}`}
             style={{
-              height: isStarted ? undefined : "4px",
-              opacity: isStarted ? 1 : 0.3,
+              height: isStarted ? undefined : "8px",
+              opacity: isStarted ? 1 : 0.2,
             }}
           />
         ))}
@@ -270,7 +277,7 @@ export default function VoicePanel({ onTripSectionUpdate, onReset }: VoicePanelP
         {isStarted && (
           <button
             onClick={handleReset}
-            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
           >
             Reset trip
           </button>
@@ -293,12 +300,12 @@ export default function VoicePanel({ onTripSectionUpdate, onReset }: VoicePanelP
             "Mountains, Japan, two weeks, cultural experiences",
             "City break, Southeast Asia, street food, under $2k",
           ].map((hint) => (
-            <div
+            <p
               key={hint}
-              className="text-sm text-gray-400 bg-white/5 rounded-lg px-4 py-2 border border-white/5"
+              className="text-sm text-gray-400 italic pl-1"
             >
-              {hint}
-            </div>
+              "{hint}"
+            </p>
           ))}
         </div>
       )}
