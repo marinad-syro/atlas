@@ -84,31 +84,17 @@ def handle_find_hotels(destination: str, check_in: str, check_out: str) -> dict:
         web_results = _get_web_results(raw)
 
         hotels = []
-        for item in web_results[:3]:
+        for item in web_results[:2]:
             url = _item_field(item, "url")
             hotels.append(
                 {
-                    "name": _item_field(item, "title", f"Hotel in {destination}"),
-                    "highlight": _item_field(item, "description"),
-                    "booking_url": url or fallback_url,
+                    "name": _item_field(item, "title", f"Hotel in {destination}")[:60],
+                    "booking_url": (url or fallback_url)[:80],
                 }
             )
 
-        # Scrape top result for richer detail (price, stars, location)
-        detailed_info = ""
-        if web_results:
-            top_url = _item_field(web_results[0], "url")
-            if top_url and "booking.com" in top_url:
-                try:
-                    scrape_raw = firecrawl.scrape(top_url, formats=["markdown"])
-                    markdown = _get_markdown(scrape_raw)
-                    detailed_info = markdown[:2000]
-                except Exception:
-                    pass
-
         response = {
             "hotels": hotels if hotels else fallback["hotels"],
-            "detailed_info": detailed_info,
             "booking_search_url": fallback_url,
         }
         cache.set("find_hotels", destination, response)

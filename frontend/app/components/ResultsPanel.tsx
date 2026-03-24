@@ -91,7 +91,7 @@ function SectionCard({
 function DestinationSection({ data }: { data: NonNullable<TripCard["destination"]> }) {
   return (
     <SectionCard title="Destination" icon="🌍">
-      {data.destinations.map((dest, i) => (
+      {(data.destinations ?? []).map((dest, i) => (
         <div key={i} className="space-y-1">
           <p className="text-white font-medium">{dest.name}</p>
           <p className="text-gray-400 text-sm leading-relaxed">{dest.summary}</p>
@@ -116,7 +116,7 @@ function DestinationSection({ data }: { data: NonNullable<TripCard["destination"
 function FlightsSection({ data }: { data: NonNullable<TripCard["flights"]> }) {
   return (
     <SectionCard title="Flights" icon="✈️">
-      {data.options.map((opt, i) => (
+      {(data.options ?? []).map((opt, i) => (
         <div key={i} className="space-y-2">
           <p className="text-white font-medium text-sm">{opt.label}</p>
           {opt.depart_date && (
@@ -145,7 +145,7 @@ function HotelsSection({ data }: { data: NonNullable<TripCard["hotels"]> }) {
   return (
     <SectionCard title="Hotels" icon="🏨">
       <div className="space-y-3">
-        {data.hotels.map((hotel, i) => (
+        {(data.hotels ?? []).map((hotel, i) => (
           <div key={i} className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-white text-sm font-medium truncate">{hotel.name}</p>
@@ -184,7 +184,7 @@ function ActivitiesSection({ data }: { data: NonNullable<TripCard["activities"]>
   return (
     <SectionCard title="Activities" icon="🎯">
       <div className="space-y-3">
-        {data.activities.map((act, i) => (
+        {(data.activities ?? []).map((act, i) => (
           <div key={i} className="space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="text-gray-500 text-xs font-mono">{String(i + 1).padStart(2, "0")}</span>
