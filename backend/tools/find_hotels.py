@@ -61,6 +61,20 @@ def _booking_search_url(destination: str, check_in: str, check_out: str) -> str:
     )
 
 
+def _booking_hotel_url(hotel_name: str, destination: str, check_in: str, check_out: str) -> str:
+    """Construct a Booking.com search URL pre-filled with the hotel name.
+
+    Individual hotel page URLs (booking.com/hotel/...) redirect to the homepage
+    without a valid session. Searching by name reliably lands on results.
+    """
+    search_term = f"{hotel_name} {destination}"
+    encoded = quote(search_term)
+    return (
+        f"https://www.booking.com/searchresults.html"
+        f"?ss={encoded}&checkin={check_in}&checkout={check_out}"
+    )
+
+
 def handle_find_hotels(destination: str, check_in: str, check_out: str) -> dict:
     cached = cache.get("find_hotels", destination)
     if cached:
@@ -85,13 +99,11 @@ def handle_find_hotels(destination: str, check_in: str, check_out: str) -> dict:
 
         hotels = []
         for item in web_results[:2]:
-            url = _item_field(item, "url")
-            hotels.append(
-                {
-                    "name": _item_field(item, "title", f"Hotel in {destination}")[:60],
-                    "booking_url": (url or fallback_url)[:80],
-                }
-            )
+            name = _item_field(item, "title", f"Hotel in {destination}")[:60]
+            # Always use a name-based search URL — individual hotel pages redirect to homepage
+            booking_url = _booking_hotel_url(name, destination, check_in, check_out)
+
+            hotels.append({"name": name, "booking_url": booking_url})
 
         response = {
             "hotels": hotels if hotels else fallback["hotels"],

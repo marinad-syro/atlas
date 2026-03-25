@@ -1,9 +1,9 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState, useCallback } from "react";
 import { motion } from "motion/react";
-import { MapPin, Plane, Hotel, Target, Globe, ExternalLink, Sparkles, Train, Map } from "lucide-react";
-import type { TripCard, MultiCityPlan, TransportLeg, CitySegment, TransportOption } from "../page";
+import { MapPin, Plane, Hotel, Target, Globe, ExternalLink, Sparkles, Train, Map, Copy, Check, BookOpen } from "lucide-react";
+import type { TripCard, MultiCityPlan, TransportLeg, CitySegment, TransportOption, DeepDive } from "../page";
 
 interface ResultsPanelProps {
   tripCard: TripCard;
@@ -18,8 +18,102 @@ const SECTIONS = [
   { key: "multiCity" as const, Icon: Map },
 ];
 
+function buildMarkdown(tripCard: TripCard): string {
+  const lines: string[] = [];
+
+  const destName = tripCard.destination?.destinations?.[0]?.name ?? "Trip Plan";
+  lines.push(`# ${destName}\n`);
+
+  if (tripCard.summary) {
+    lines.push("## Summary\n");
+    tripCard.summary.bullets.forEach((b) => lines.push(`- ${b}`));
+    lines.push("");
+  }
+
+  if (tripCard.destination) {
+    lines.push("## Destinations\n");
+    (tripCard.destination.destinations ?? []).forEach((d) => {
+      lines.push(`### [${d.name}](${d.source_url})`);
+      lines.push(d.summary);
+      lines.push("");
+    });
+  }
+
+  if (tripCard.flights) {
+    lines.push("## Flights\n");
+    (tripCard.flights.options ?? []).forEach((f) => {
+      lines.push(`- [${f.label}](${f.skyscanner_url})`);
+      if (f.note) lines.push(`  *${f.note}*`);
+    });
+    lines.push("");
+  }
+
+  if (tripCard.hotels) {
+    lines.push("## Hotels\n");
+    (tripCard.hotels.hotels ?? []).forEach((h) => {
+      lines.push(`- [${h.name}](${h.booking_url})`);
+    });
+    lines.push("");
+  }
+
+  if (tripCard.activities) {
+    lines.push("## Activities\n");
+    (tripCard.activities.activities ?? []).forEach((a, i) => {
+      const link = a.source_url ? `[${a.name}](${a.source_url})` : a.name;
+      lines.push(`${i + 1}. ${link}${a.description ? ` — ${a.description}` : ""}`);
+    });
+    lines.push("");
+  }
+
+  if (tripCard.multiCity) {
+    const plan = tripCard.multiCity;
+    lines.push(`## Multi-City Route: ${plan.ordered_cities.join(" → ")}\n`);
+    plan.legs.forEach((leg) => {
+      if (leg.nights === 0) return;
+      lines.push(`### ${leg.to} (${leg.nights} nights, ${leg.arrive} – ${leg.depart})`);
+      if (leg.options.length > 0) {
+        lines.push("**Getting there:**");
+        leg.options.forEach((opt) => lines.push(`- [${opt.label}](${opt.url}) *(${opt.mode})*`));
+      }
+      const seg = plan.segments.find((s) => s.city.toLowerCase() === leg.to.toLowerCase());
+      if (seg?.hotels) {
+        lines.push("**Hotels:**");
+        (seg.hotels.hotels ?? []).forEach((h) => lines.push(`- [${h.name}](${h.booking_url})`));
+      }
+      if (seg?.activities) {
+        lines.push("**Activities:**");
+        (seg.activities.activities ?? []).forEach((a, i) => {
+          const link = a.source_url ? `[${a.name}](${a.source_url})` : a.name;
+          lines.push(`${i + 1}. ${link}${a.description ? ` — ${a.description}` : ""}`);
+        });
+      }
+      lines.push("");
+    });
+  }
+
+  if (tripCard.deepDives && tripCard.deepDives.length > 0) {
+    lines.push("## Research Notes\n");
+    tripCard.deepDives.forEach((dd) => {
+      lines.push(`### ${dd.title}`);
+      lines.push(dd.content);
+      lines.push(`\n*Source: [${dd.citation_title}](${dd.citation_url})*`);
+      lines.push("");
+    });
+  }
+
+  return lines.join("\n");
+}
+
 export default function ResultsPanel({ tripCard }: ResultsPanelProps) {
   const hasAnyData = Object.values(tripCard).some((v) => v !== null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    const md = buildMarkdown(tripCard);
+    await navigator.clipboard.writeText(md);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [tripCard]);
 
   if (!hasAnyData) {
     return (
@@ -33,40 +127,52 @@ export default function ResultsPanel({ tripCard }: ResultsPanelProps) {
     );
   }
 
-  // Progress icons row (shared between both layouts)
-  const progressIcons = (
-    <div className="absolute -top-10 right-0 flex gap-2 p-2 z-30">
-      {SECTIONS.map(({ key, Icon }) => {
-        const active = tripCard[key] !== null;
-        return (
-          <motion.div
-            key={key}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: active ? 1 : 0.45 }}
-            className={`p-1.5 rounded-full ${active ? "bg-indigo-500/80 text-white shadow-md" : "glass text-white/70"}`}
-          >
-            <Icon size={16} />
-          </motion.div>
-        );
-      })}
+  // Toolbar: progress icons + copy button, all inside normal flow
+  const toolbar = (
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex gap-2">
+        {SECTIONS.map(({ key, Icon }) => {
+          const active = tripCard[key] !== null;
+          return (
+            <motion.div
+              key={key}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: active ? 1 : 0.35 }}
+              className={`p-1.5 rounded-full ${active ? "bg-indigo-500/80 text-white shadow-md" : "glass text-white/50"}`}
+            >
+              <Icon size={14} />
+            </motion.div>
+          );
+        })}
+      </div>
+      <button
+        onClick={handleCopy}
+        title="Copy as Markdown"
+        className="flex items-center gap-1.5 px-3 py-1.5 glass rounded-full text-xs font-medium text-white/80 hover:text-white hover:bg-white/20 transition-all"
+      >
+        {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
+        {copied ? "Copied!" : "Copy"}
+      </button>
     </div>
   );
+
+  const deepDives = tripCard.deepDives && tripCard.deepDives.length > 0 ? tripCard.deepDives : null;
 
   // Multi-city layout
   if (tripCard.multiCity) {
     return (
-      <div className="relative">
-        {progressIcons}
+      <div>
+        {toolbar}
         {tripCard.summary && <SummaryCard data={tripCard.summary} />}
         <MultiCityView plan={tripCard.multiCity} />
+        {deepDives && <DeepDivesSection dives={deepDives} />}
       </div>
     );
   }
 
   return (
-    <div className="relative">
-      {/* Section progress icons */}
-      {progressIcons}
+    <div>
+      {toolbar}
 
       {/* Summary card — full width */}
       {tripCard.summary && <SummaryCard data={tripCard.summary} />}
@@ -85,6 +191,9 @@ export default function ResultsPanel({ tripCard }: ResultsPanelProps) {
           )}
         {tripCard.activities && <ActivitiesCard data={tripCard.activities} />}
       </div>
+
+      {/* Deep dive research cards */}
+      {deepDives && <DeepDivesSection dives={deepDives} />}
     </div>
   );
 }
@@ -489,7 +598,7 @@ function MultiCityView({ plan }: { plan: MultiCityPlan }) {
     <div className="mt-4">
       <div className="flex items-center gap-2 mb-2">
         <Map size={16} className="text-indigo-500" />
-        <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-700">Multi-City Itinerary</h2>
+        <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-200">Multi-City Itinerary</h2>
       </div>
       <RouteTimeline plan={plan} />
       {cities.map((city, i) => (
@@ -500,6 +609,31 @@ function MultiCityView({ plan }: { plan: MultiCityPlan }) {
           arrivalLeg={arrivalLegMap[city.toLowerCase()]}
           segment={segmentMap[city.toLowerCase()]}
         />
+      ))}
+    </div>
+  );
+}
+
+// ─── Deep Dive Research Cards ─────────────────────────────────────────────────
+
+function DeepDivesSection({ dives }: { dives: DeepDive[] }) {
+  return (
+    <div className="mt-4 space-y-3">
+      {dives.map((dive, i) => (
+        <Card key={i} title={dive.title} icon={<BookOpen className="text-indigo-700" size={18} />}>
+          <div className="bg-white/30 p-3 rounded-xl">
+            <p className="text-xs text-gray-700 leading-relaxed">{dive.content}</p>
+          </div>
+          <a
+            href={dive.citation_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center gap-1 text-[10px] text-indigo-700 hover:underline"
+          >
+            <ExternalLink size={9} />
+            {dive.citation_title}
+          </a>
+        </Card>
       ))}
     </div>
   );

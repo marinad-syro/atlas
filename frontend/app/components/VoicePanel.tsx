@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import type { Easing } from "motion";
 import { Mic, RotateCcw, X } from "lucide-react";
 import { Syne } from "next/font/google";
-import type { TripCard } from "../page";
+import type { TripCard, DeepDive } from "../page";
 import ResultsPanel from "./ResultsPanel";
 
 const syne = Syne({ subsets: ["latin"], weight: ["800"] });
@@ -234,13 +234,14 @@ interface VoicePanelProps {
   onTripSectionUpdate: (section: string, data: unknown) => void;
   onTransportLegUpdate: (fromCity: string, toCity: string, options: unknown[]) => void;
   onCitySegmentUpdate: (city: string, hotels: TripCard["hotels"], activities: TripCard["activities"]) => void;
+  onDeepDiveAdd: (deepDive: DeepDive) => void;
   onReset: () => void;
   tripCard: TripCard;
 }
 
 type ConvMode = "speaking" | "listening";
 
-export default function VoicePanel({ onTripSectionUpdate, onTransportLegUpdate, onCitySegmentUpdate, onReset, tripCard }: VoicePanelProps) {
+export default function VoicePanel({ onTripSectionUpdate, onTransportLegUpdate, onCitySegmentUpdate, onDeepDiveAdd, onReset, tripCard }: VoicePanelProps) {
   const [isStarted, setIsStarted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<ConvMode>("listening");
@@ -269,6 +270,10 @@ export default function VoicePanel({ onTripSectionUpdate, onTransportLegUpdate, 
           return "displayed";
         }
         onTransportLegUpdate(from_city, to_city, parsedOptions);
+        return "displayed";
+      },
+      show_deep_dive: async ({ title, content, citation_url, citation_title }: { title: string; content: string; citation_url: string; citation_title: string }) => {
+        onDeepDiveAdd({ title, content, citation_url, citation_title });
         return "displayed";
       },
       show_city_segment: async ({ city, hotels, activities }: { city: string; hotels: unknown; activities: unknown }) => {
