@@ -4,6 +4,7 @@ import ResultsPanel from '../../app/components/ResultsPanel'
 import type { TripCard } from '../../app/page'
 
 const EMPTY_TRIP: TripCard = {
+  summary: null,
   destination: null,
   flights: null,
   hotels: null,

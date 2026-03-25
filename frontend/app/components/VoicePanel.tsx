@@ -3,6 +3,7 @@
 import { useConversation } from "@elevenlabs/react";
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import type { Easing } from "motion";
 import { Mic, RotateCcw, X } from "lucide-react";
 import { Syne } from "next/font/google";
 import type { TripCard } from "../page";
@@ -96,9 +97,9 @@ const orbVariants = {
     y: [0, -18],
     scale: [1, 1.05],
     transition: {
-      borderRadius: { duration: 3, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
-      y: { duration: 2.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
-      scale: { duration: 3.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
+      borderRadius: { duration: 3, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
+      y: { duration: 2.5, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
+      scale: { duration: 3.5, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
     },
   },
   listening: {
@@ -108,8 +109,8 @@ const orbVariants = {
     ],
     y: [0, -14],
     transition: {
-      borderRadius: { duration: 5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
-      y: { duration: 3.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
+      borderRadius: { duration: 5, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
+      y: { duration: 3.5, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
     },
   },
   speaking: {
@@ -124,10 +125,10 @@ const orbVariants = {
       "0 0 60px rgba(139, 92, 246, 0.7)",
     ],
     transition: {
-      borderRadius: { duration: 0.9, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
-      scale: { duration: 0.9, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
-      y: { duration: 3.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
-      boxShadow: { duration: 0.9, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
+      borderRadius: { duration: 0.9, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
+      scale: { duration: 0.9, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
+      y: { duration: 3.5, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
+      boxShadow: { duration: 0.9, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as Easing },
     },
   },
 };
