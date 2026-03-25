@@ -34,6 +34,9 @@ from tools.suggest_destination import handle_suggest_destination
 from tools.find_flights import handle_find_flights
 from tools.find_hotels import handle_find_hotels
 from tools.find_activities import handle_find_activities
+from tools.plan_route import handle_plan_route
+from tools.find_transport import handle_find_transport
+from tools.research_topic import handle_research_topic
 
 app = FastAPI(title="TripAgent Backend", version="1.0.0")
 
@@ -84,6 +87,26 @@ class FindActivitiesRequest(BaseModel):
     preferences: str = ""
 
 
+class FindTransportRequest(BaseModel):
+    origin_city: str
+    destination_city: str
+    travel_date: str
+    passengers: int = 1
+    mode: str = "auto"
+
+
+class PlanRouteRequest(BaseModel):
+    cities: str  # comma-separated, backend splits
+    origin_city: str
+    total_days: int
+    start_date: str
+
+
+class ResearchTopicRequest(BaseModel):
+    topic: str
+    destination: str
+
+
 # ─── Routes ────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
@@ -126,6 +149,37 @@ def find_activities(req: FindActivitiesRequest):
     log.info("find_activities: %s  prefs=%r", req.destination, req.preferences)
     result = handle_find_activities(req.destination, req.preferences)
     log.info("find_activities: returning %d activity(s)", len(result.get("activities", [])))
+    return PlainTextResponse(json.dumps(result))
+
+
+@app.post("/tools/plan_route")
+def plan_route(req: PlanRouteRequest):
+    cities_list = [c.strip() for c in req.cities.split(",") if c.strip()]
+    log.info("plan_route: origin=%r cities=%r days=%d start=%s", req.origin_city, cities_list, req.total_days, req.start_date)
+    result = handle_plan_route(cities_list, req.origin_city, req.total_days, req.start_date)
+    log.info("plan_route: returning %d cities, %d legs", len(result.get("ordered_cities", [])), len(result.get("legs", [])))
+    return PlainTextResponse(json.dumps(result))
+
+
+@app.post("/tools/research_topic")
+def research_topic(req: ResearchTopicRequest):
+    log.info("research_topic: topic=%r destination=%r", req.topic, req.destination)
+    result = handle_research_topic(req.topic, req.destination)
+    log.info("research_topic: returning %d chars of content", len(result.get("content", "")))
+    return PlainTextResponse(json.dumps(result))
+
+
+@app.post("/tools/find_transport")
+def find_transport(req: FindTransportRequest):
+    log.info("find_transport: %s → %s on %s mode=%s", req.origin_city, req.destination_city, req.travel_date, req.mode)
+    result = handle_find_transport(
+        req.origin_city,
+        req.destination_city,
+        req.travel_date,
+        req.passengers,
+        req.mode,
+    )
+    log.info("find_transport: returning %d option(s)", len(result.get("options", [])))
     return PlainTextResponse(json.dumps(result))
 
 

@@ -38,6 +38,13 @@ export type MultiCityPlan = {
   segments: CitySegment[];
 };
 
+export type DeepDive = {
+  title: string;
+  content: string;
+  citation_url: string;
+  citation_title: string;
+};
+
 // Shape mirrors the server tool response schemas from the design doc
 export type TripCard = {
   summary: { bullets: string[] } | null;
@@ -63,6 +70,7 @@ export type TripCard = {
     activities: Array<{ name: string; description?: string; source_url?: string }>;
   } | null;
   multiCity: MultiCityPlan | null;
+  deepDives: DeepDive[] | null;
 };
 
 const EMPTY_TRIP: TripCard = {
@@ -72,6 +80,7 @@ const EMPTY_TRIP: TripCard = {
   hotels: null,
   activities: null,
   multiCity: null,
+  deepDives: null,
 };
 
 export default function Home() {
@@ -121,6 +130,13 @@ export default function Home() {
     });
   };
 
+  const handleDeepDiveAdd = (deepDive: DeepDive) => {
+    setTripCard((prev) => ({
+      ...prev,
+      deepDives: [...(prev.deepDives ?? []), deepDive],
+    }));
+  };
+
   const handleReset = () => setTripCard(EMPTY_TRIP);
 
   return (
@@ -133,6 +149,7 @@ export default function Home() {
         onTripSectionUpdate={handleTripSectionUpdate}
         onTransportLegUpdate={handleTransportLegUpdate}
         onCitySegmentUpdate={handleCitySegmentUpdate}
+        onDeepDiveAdd={handleDeepDiveAdd}
         onReset={handleReset}
         tripCard={tripCard}
       />
