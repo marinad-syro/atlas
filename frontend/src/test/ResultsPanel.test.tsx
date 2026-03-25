@@ -9,6 +9,7 @@ const EMPTY_TRIP: TripCard = {
   flights: null,
   hotels: null,
   activities: null,
+  multiCity: null,
 }
 
 describe('ResultsPanel', () => {
@@ -29,7 +30,7 @@ describe('ResultsPanel', () => {
     expect(screen.getByText('Great city')).toBeInTheDocument()
   })
 
-  it('shows hotel names and booking links', () => {
+  it('shows hotel names', () => {
     const trip: TripCard = {
       ...EMPTY_TRIP,
       hotels: {
@@ -40,7 +41,7 @@ describe('ResultsPanel', () => {
     expect(screen.getByText('Park Hyatt')).toBeInTheDocument()
   })
 
-  it('shows activity names in numbered list', () => {
+  it('shows activity names and descriptions', () => {
     const trip: TripCard = {
       ...EMPTY_TRIP,
       activities: {
@@ -49,12 +50,34 @@ describe('ResultsPanel', () => {
     }
     render(<ResultsPanel tripCard={trip} />)
     expect(screen.getByText('Visit Mount Fuji')).toBeInTheDocument()
-    expect(screen.getByText('01')).toBeInTheDocument()
+    expect(screen.getByText('Iconic peak')).toBeInTheDocument()
   })
 
-  it('hides section icons when no data', () => {
-    render(<ResultsPanel tripCard={EMPTY_TRIP} />)
-    // Icons row should not render when no data
-    expect(screen.queryByText('✈️')).not.toBeInTheDocument()
+  it('shows summary bullets when provided', () => {
+    const trip: TripCard = {
+      ...EMPTY_TRIP,
+      summary: { bullets: ['Fly to Tokyo', 'Stay 5 nights'] },
+    }
+    render(<ResultsPanel tripCard={trip} />)
+    expect(screen.getByText('Fly to Tokyo')).toBeInTheDocument()
+    expect(screen.getByText('Stay 5 nights')).toBeInTheDocument()
+  })
+
+  it('shows multi-city itinerary header when multiCity provided', () => {
+    const trip: TripCard = {
+      ...EMPTY_TRIP,
+      multiCity: {
+        ordered_cities: ['Paris', 'Rome'],
+        legs: [
+          { from: 'NYC', to: 'Paris', nights: 3, arrive: '2026-04-01', depart: '2026-04-04', options: [] },
+          { from: 'Paris', to: 'Rome', nights: 4, arrive: '2026-04-04', depart: '2026-04-08', options: [] },
+        ],
+        segments: [],
+      },
+    }
+    render(<ResultsPanel tripCard={trip} />)
+    expect(screen.getByText('Multi-City Itinerary')).toBeInTheDocument()
+    expect(screen.getAllByText('Paris').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Rome').length).toBeGreaterThan(0)
   })
 })

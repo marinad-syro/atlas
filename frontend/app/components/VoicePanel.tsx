@@ -13,7 +13,8 @@ const syne = Syne({ subsets: ["latin"], weight: ["800"] });
 
 // ─── Mock mode ────────────────────────────────────────────────────────────────
 
-const MOCK_MODE = process.env.NEXT_PUBLIC_MOCK_AGENT === "true";
+const MOCK_MODE = process.env.NEXT_PUBLIC_MOCK_AGENT === "true" || process.env.NEXT_PUBLIC_MOCK_AGENT === "multicity";
+const MOCK_MULTI_CITY = process.env.NEXT_PUBLIC_MOCK_AGENT === "multicity";
 
 const MOCK_SEQUENCE = [
   {
@@ -83,6 +84,100 @@ const MOCK_SEQUENCE = [
   },
 ];
 
+const MOCK_MULTI_CITY_SEQUENCE = [
+  // Step 1: route plan arrives
+  {
+    delay: 1000,
+    section: "multiCity",
+    data: {
+      ordered_cities: ["Paris", "Barcelona", "Rome"],
+      legs: [
+        { from: "New York", to: "Paris", arrive: "2026-06-01", depart: "2026-06-05", nights: 4, options: [] },
+        { from: "Paris", to: "Barcelona", arrive: "2026-06-05", depart: "2026-06-09", nights: 4, options: [] },
+        { from: "Barcelona", to: "Rome", arrive: "2026-06-09", depart: "2026-06-14", nights: 5, options: [] },
+        { from: "Rome", to: "New York", arrive: "2026-06-14", depart: "2026-06-14", nights: 0, options: [] },
+      ],
+      segments: [],
+    },
+  },
+  // Step 2: transport for leg 1 (flight JFK→CDG)
+  {
+    delay: 3000,
+    section: "multiCity",
+    data: {
+      ordered_cities: ["Paris", "Barcelona", "Rome"],
+      legs: [
+        { from: "New York", to: "Paris", arrive: "2026-06-01", depart: "2026-06-05", nights: 4, options: [
+          { label: "New York (JFK) → Paris (CDG)", mode: "flight", provider: "Skyscanner", url: "https://www.skyscanner.com/transport/flights/jfk/cdg/260601/", travel_date: "2026-06-01" },
+        ]},
+        { from: "Paris", to: "Barcelona", arrive: "2026-06-05", depart: "2026-06-09", nights: 4, options: [] },
+        { from: "Barcelona", to: "Rome", arrive: "2026-06-09", depart: "2026-06-14", nights: 5, options: [] },
+        { from: "Rome", to: "New York", arrive: "2026-06-14", depart: "2026-06-14", nights: 0, options: [] },
+      ],
+      segments: [],
+    },
+  },
+  // Step 3: transport for leg 2 (train Paris→Barcelona)
+  {
+    delay: 4500,
+    section: "multiCity",
+    data: {
+      ordered_cities: ["Paris", "Barcelona", "Rome"],
+      legs: [
+        { from: "New York", to: "Paris", arrive: "2026-06-01", depart: "2026-06-05", nights: 4, options: [
+          { label: "New York (JFK) → Paris (CDG)", mode: "flight", provider: "Skyscanner", url: "https://www.skyscanner.com/transport/flights/jfk/cdg/260601/", travel_date: "2026-06-01" },
+        ]},
+        { from: "Paris", to: "Barcelona", arrive: "2026-06-05", depart: "2026-06-09", nights: 4, options: [
+          { label: "Paris → Barcelona", mode: "train", provider: "SNCF Connect", url: "https://www.sncf-connect.com/app/home/shop/search?originCode=FRPAR&destinationCode=ESBAR&outwardDate=2026-06-05T09:00:00", travel_date: "2026-06-05", duration_hint: "~6h 30m", note: "High-speed TGV, direct" },
+          { label: "Paris (CDG) → Barcelona (BCN)", mode: "flight", provider: "Skyscanner", url: "https://www.skyscanner.com/transport/flights/cdg/bcn/260605/", travel_date: "2026-06-05" },
+        ]},
+        { from: "Barcelona", to: "Rome", arrive: "2026-06-09", depart: "2026-06-14", nights: 5, options: [] },
+        { from: "Rome", to: "New York", arrive: "2026-06-14", depart: "2026-06-14", nights: 0, options: [] },
+      ],
+      segments: [],
+    },
+  },
+  // Step 4: Paris hotels + activities
+  {
+    delay: 6000,
+    section: "multiCity",
+    data: {
+      ordered_cities: ["Paris", "Barcelona", "Rome"],
+      legs: [
+        { from: "New York", to: "Paris", arrive: "2026-06-01", depart: "2026-06-05", nights: 4, options: [
+          { label: "New York (JFK) → Paris (CDG)", mode: "flight", provider: "Skyscanner", url: "https://www.skyscanner.com/transport/flights/jfk/cdg/260601/", travel_date: "2026-06-01" },
+        ]},
+        { from: "Paris", to: "Barcelona", arrive: "2026-06-05", depart: "2026-06-09", nights: 4, options: [
+          { label: "Paris → Barcelona", mode: "train", provider: "SNCF Connect", url: "https://www.sncf-connect.com/app/home/shop/search?originCode=FRPAR&destinationCode=ESBAR&outwardDate=2026-06-05T09:00:00", travel_date: "2026-06-05", duration_hint: "~6h 30m" },
+        ]},
+        { from: "Barcelona", to: "Rome", arrive: "2026-06-09", depart: "2026-06-14", nights: 5, options: [] },
+        { from: "Rome", to: "New York", arrive: "2026-06-14", depart: "2026-06-14", nights: 0, options: [] },
+      ],
+      segments: [
+        {
+          city: "Paris", arrive: "2026-06-01", depart: "2026-06-05", nights: 4,
+          hotels: { hotels: [{ name: "Hôtel du Louvre", booking_url: "https://www.booking.com/searchresults.html?ss=Paris&checkin=2026-06-01&checkout=2026-06-05" }], booking_search_url: "https://www.booking.com/searchresults.html?ss=Paris&checkin=2026-06-01&checkout=2026-06-05" },
+          activities: { activities: [{ name: "Musée d'Orsay", description: "Impressionist masterpieces, skip the Louvre crowds.", source_url: "https://www.musee-orsay.fr" }, { name: "Le Marais food walk", description: "Falafel, croissants, and hidden courtyards.", source_url: "https://www.lonelyplanet.com" }] },
+        },
+      ],
+    },
+  },
+  // Step 5: summary
+  {
+    delay: 8000,
+    section: "summary",
+    data: { bullets: [
+      "3 cities in 13 nights: Paris → Barcelona → Rome.",
+      "Train Paris→Barcelona: 6h 30m on TGV, no airport stress.",
+      "Paris: 4 nights, best for art and food in Le Marais.",
+      "Barcelona: 4 nights, architecture + beach combo.",
+      "Rome: 5 nights, most historical density per square km.",
+      "Book Paris hotels early — June is peak season.",
+      "Eurail pass worth it if you add a 4th city.",
+    ]},
+  },
+];
+
 
 // ─── Orb animation variants ───────────────────────────────────────────────────
 // Using repeatType: "mirror" with 2 keyframes so the animation bounces
@@ -137,13 +232,15 @@ const orbVariants = {
 
 interface VoicePanelProps {
   onTripSectionUpdate: (section: string, data: unknown) => void;
+  onTransportLegUpdate: (fromCity: string, toCity: string, options: unknown[]) => void;
+  onCitySegmentUpdate: (city: string, hotels: TripCard["hotels"], activities: TripCard["activities"]) => void;
   onReset: () => void;
   tripCard: TripCard;
 }
 
 type ConvMode = "speaking" | "listening";
 
-export default function VoicePanel({ onTripSectionUpdate, onReset, tripCard }: VoicePanelProps) {
+export default function VoicePanel({ onTripSectionUpdate, onTransportLegUpdate, onCitySegmentUpdate, onReset, tripCard }: VoicePanelProps) {
   const [isStarted, setIsStarted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<ConvMode>("listening");
@@ -153,15 +250,37 @@ export default function VoicePanel({ onTripSectionUpdate, onReset, tripCard }: V
   const conversation = useConversation({
     clientTools: {
       show_trip_section: async ({ section, data }: { section: string; data: unknown }) => {
-        const valid = ["summary", "destination", "flights", "hotels", "activities"];
-        if (!valid.includes(section)) return "unknown section";
+        const valid = ["summary", "destination", "flights", "hotels", "activities", "multiCity"];
+        if (!valid.includes(section)) return "displayed";
         let parsed: unknown;
         try {
           parsed = typeof data === "string" ? JSON.parse(data) : data;
         } catch {
-          return "parse error";
+          return "displayed";
         }
         onTripSectionUpdate(section, parsed);
+        return "displayed";
+      },
+      show_transport_leg: async ({ from_city, to_city, options }: { from_city: string; to_city: string; options: unknown }) => {
+        let parsedOptions: unknown[];
+        try {
+          parsedOptions = typeof options === "string" ? JSON.parse(options) : (Array.isArray(options) ? options : []);
+        } catch {
+          return "displayed";
+        }
+        onTransportLegUpdate(from_city, to_city, parsedOptions);
+        return "displayed";
+      },
+      show_city_segment: async ({ city, hotels, activities }: { city: string; hotels: unknown; activities: unknown }) => {
+        let parsedHotels: TripCard["hotels"] = null;
+        let parsedActivities: TripCard["activities"] = null;
+        try {
+          parsedHotels = typeof hotels === "string" ? JSON.parse(hotels) : (hotels as TripCard["hotels"]);
+          parsedActivities = typeof activities === "string" ? JSON.parse(activities) : (activities as TripCard["activities"]);
+        } catch {
+          return "displayed";
+        }
+        onCitySegmentUpdate(city, parsedHotels, parsedActivities);
         return "displayed";
       },
     },
@@ -178,10 +297,11 @@ export default function VoicePanel({ onTripSectionUpdate, onReset, tripCard }: V
   const runMockConversation = useCallback(() => {
     setIsStarted(true);
     setMode("speaking");
-    MOCK_SEQUENCE.forEach(({ delay, section, data }) => {
+    const seq = MOCK_MULTI_CITY ? MOCK_MULTI_CITY_SEQUENCE : MOCK_SEQUENCE;
+    seq.forEach(({ delay, section, data }) => {
       setTimeout(() => onTripSectionUpdate(section, data), delay);
     });
-    setTimeout(() => setMode("listening"), MOCK_SEQUENCE[MOCK_SEQUENCE.length - 1].delay + 1500);
+    setTimeout(() => setMode("listening"), seq[seq.length - 1].delay + 1500);
   }, [onTripSectionUpdate]);
 
   const startConversation = async () => {
@@ -317,7 +437,7 @@ export default function VoicePanel({ onTripSectionUpdate, onReset, tripCard }: V
           </motion.p>
         ) : !hasAnyData ? (
           <p className="text-xs italic text-white/75">
-            Try saying &ldquo;I want to go to Tokyo in April&rdquo;
+            Try saying &ldquo;I want to explore Greece in April&rdquo;
           </p>
         ) : null}
       </div>
