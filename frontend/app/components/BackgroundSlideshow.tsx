@@ -13,9 +13,10 @@ const DESTINATIONS = [
   { query: "new zealand fiord",       label: "New Zealand"  },
 ];
 
-// source.unsplash.com used as immediate fallback — shown while API images load
+// picsum.photos used as fallback — reliable free photo service, seeded per destination
 function fallbackUrl(query: string) {
-  return `https://source.unsplash.com/1920x1080/?${encodeURIComponent(query)}`;
+  const seed = query.split(" ")[0];
+  return `https://picsum.photos/seed/${seed}/1920/1080`;
 }
 
 type Slide = { imageUrl: string; label: string };

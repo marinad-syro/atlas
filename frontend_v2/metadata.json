@@ -1,5 +1,0 @@
-{
-  "name": "Voice Travel Planner",
-  "description": "A voice-controlled AI travel assistant that helps you plan trips with interactive glassy cards.",
-  "requestFramePermissions": ["microphone"]
-}
