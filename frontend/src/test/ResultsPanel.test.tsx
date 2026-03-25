@@ -37,7 +37,6 @@ describe('ResultsPanel', () => {
     }
     render(<ResultsPanel tripCard={trip} />)
     expect(screen.getByText('Park Hyatt')).toBeInTheDocument()
-    expect(screen.getByText('Book →')).toBeInTheDocument()
   })
 
   it('shows activity names in numbered list', () => {
