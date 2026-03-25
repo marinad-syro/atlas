@@ -2,51 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 15, 30;
-  --background-end-rgb: 5, 10, 20;
-}
+@layer base {
+  :root {
+    --foreground-rgb: 30, 28, 50;
+  }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-    to bottom,
-    rgb(var(--background-start-rgb)),
-    rgb(var(--background-end-rgb))
-  );
-  min-height: 100vh;
-}
+  body {
+    color: rgb(var(--foreground-rgb));
+    /* Dark fallback shown before images load */
+    background: #1a1025;
+    min-height: 100vh;
+    overflow: hidden;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
 
-/* Waveform bars */
-.waveform-bar {
-  width: 3px;
-  background: #60a5fa;
-  border-radius: 2px;
-  transition: height 0.1s ease;
-}
-
-/* Accessible focus ring */
-button:focus-visible {
-  outline: 2px solid #60a5fa;
-  outline-offset: 3px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .waveform-bar {
-    animation: none !important;
-    height: 8px !important;
+  /* Subtle vignette — darkens edges only, centre stays open */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at center, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
+    z-index: 10;
   }
 }
 
-/* Scrollbar styling for results panel */
-.results-scroll::-webkit-scrollbar {
-  width: 4px;
+@layer components {
+  /* Glassmorphism base — used on orb, buttons */
+  .glass {
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Glassmorphism cards — more opaque so dark-text is readable over photos */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  }
 }
-.results-scroll::-webkit-scrollbar-track {
-  background: transparent;
+
+/* ── Moving-color gradient (inside orb) ────────────────────────────────────── */
+
+@keyframes moving-colors {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
-.results-scroll::-webkit-scrollbar-thumb {
-  background: #374151;
-  border-radius: 2px;
+
+.animate-moving-colors {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: moving-colors 15s ease infinite;
+}
+
+/* ── Mic ring (scale-out expand) ───────────────────────────────────────────── */
+
+@keyframes mic-ring {
+  0%   { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.animate-mic-ring {
+  animation: mic-ring 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* ── Accessible focus ring ─────────────────────────────────────────────────── */
+
+button:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 3px;
+}
+
+/* ── Hide scrollbar (cards grid) ───────────────────────────────────────────── */
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

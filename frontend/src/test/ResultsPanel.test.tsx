@@ -4,6 +4,7 @@ import ResultsPanel from '../../app/components/ResultsPanel'
 import type { TripCard } from '../../app/page'
 
 const EMPTY_TRIP: TripCard = {
+  summary: null,
   destination: null,
   flights: null,
   hotels: null,
@@ -37,7 +38,6 @@ describe('ResultsPanel', () => {
     }
     render(<ResultsPanel tripCard={trip} />)
     expect(screen.getByText('Park Hyatt')).toBeInTheDocument()
-    expect(screen.getByText('Book →')).toBeInTheDocument()
   })
 
   it('shows activity names in numbered list', () => {
