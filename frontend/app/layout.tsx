@@ -16,6 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <BackgroundSlideshow />
         {children}
+        <p className="fixed bottom-4 right-4 text-[10px] text-white/35 select-none z-50 tracking-wide">
+          powered by ElevenLabs &amp; Firecrawl
+        </p>
       </body>
     </html>
   );

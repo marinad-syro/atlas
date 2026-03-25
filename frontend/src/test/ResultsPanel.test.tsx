@@ -9,6 +9,7 @@ const EMPTY_TRIP: TripCard = {
   flights: null,
   hotels: null,
   activities: null,
+  multiCity: null,
 }
 
 describe('ResultsPanel', () => {
