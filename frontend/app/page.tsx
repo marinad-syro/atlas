@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import VoicePanel from "./components/VoicePanel";
-import ResultsPanel from "./components/ResultsPanel";
 
 // Shape mirrors the server tool response schemas from the design doc
 export type TripCard = {
+  summary: { bullets: string[] } | null;
   destination: {
     destinations: Array<{ name: string; summary: string; source_url: string }>;
     detailed_info?: string;
@@ -30,6 +30,7 @@ export type TripCard = {
 };
 
 const EMPTY_TRIP: TripCard = {
+  summary: null,
   destination: null,
   flights: null,
   hotels: null,
@@ -39,8 +40,10 @@ const EMPTY_TRIP: TripCard = {
 export default function Home() {
   const [tripCard, setTripCard] = useState<TripCard>(EMPTY_TRIP);
 
+  const hasAnyData = Object.values(tripCard).some((v) => v !== null);
+
   const handleTripSectionUpdate = (section: string, data: unknown) => {
-    const validSections = ["destination", "flights", "hotels", "activities"] as const;
+    const validSections = ["summary", "destination", "flights", "hotels", "activities"] as const;
     if (!validSections.includes(section as (typeof validSections)[number])) return;
     setTripCard((prev) => ({ ...prev, [section]: data }));
   };
@@ -48,16 +51,16 @@ export default function Home() {
   const handleReset = () => setTripCard(EMPTY_TRIP);
 
   return (
-    <div className="flex flex-col sm:flex-row h-screen overflow-hidden">
-      {/* Left panel: voice conversation */}
-      <div className="sm:w-2/5 sm:min-w-[340px] sm:border-r sm:border-b-0 border-b border-white/10">
-        <VoicePanel onTripSectionUpdate={handleTripSectionUpdate} onReset={handleReset} />
-      </div>
-
-      {/* Right panel: trip card results */}
-      <div className="flex-1 overflow-hidden">
-        <ResultsPanel tripCard={tripCard} />
-      </div>
+    <div
+      className={`mx-auto transition-all duration-500 ${
+        hasAnyData ? "max-w-3xl" : "max-w-sm"
+      }`}
+    >
+      <VoicePanel
+        onTripSectionUpdate={handleTripSectionUpdate}
+        onReset={handleReset}
+        tripCard={tripCard}
+      />
     </div>
   );
 }

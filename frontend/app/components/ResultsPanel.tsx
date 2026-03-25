@@ -1,5 +1,8 @@
 "use client";
 
+import { ReactNode } from "react";
+import { motion } from "motion/react";
+import { MapPin, Plane, Hotel, Target, Globe, ExternalLink, Sparkles } from "lucide-react";
 import type { TripCard } from "../page";
 
 interface ResultsPanelProps {
@@ -7,160 +10,171 @@ interface ResultsPanelProps {
 }
 
 const SECTIONS = [
-  { key: "destination" as const, label: "Destination", icon: "🌍" },
-  { key: "flights" as const, label: "Flights", icon: "✈️" },
-  { key: "hotels" as const, label: "Hotels", icon: "🏨" },
-  { key: "activities" as const, label: "Activities", icon: "🎯" },
+  { key: "summary" as const, Icon: Sparkles },
+  { key: "destination" as const, Icon: Globe },
+  { key: "flights" as const, Icon: Plane },
+  { key: "hotels" as const, Icon: Hotel },
+  { key: "activities" as const, Icon: Target },
 ];
 
 export default function ResultsPanel({ tripCard }: ResultsPanelProps) {
   const hasAnyData = Object.values(tripCard).some((v) => v !== null);
 
+  if (!hasAnyData) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 opacity-40 py-20">
+        <div className="text-6xl">🗺️</div>
+        <p className="text-gray-500 text-lg">Your trip plan will appear here</p>
+        <p className="text-gray-400 text-sm">
+          Start a voice conversation and describe where you want to go
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full flex flex-col p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white">Your Trip</h2>
-        {hasAnyData && (
-          <div className="flex gap-2">
-            {SECTIONS.map(({ key, icon }) => (
-              <div
-                key={key}
-                className={`text-lg transition-opacity ${
-                  tripCard[key] !== null ? "opacity-100" : "opacity-20"
-                }`}
-              >
-                {icon}
-              </div>
-            ))}
-          </div>
-        )}
+    <div className="relative">
+      {/* Section progress icons */}
+      <div className="absolute -top-10 right-0 flex gap-2 p-2 z-30">
+        {SECTIONS.map(({ key, Icon }) => {
+          const active = tripCard[key] !== null;
+          return (
+            <motion.div
+              key={key}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: active ? 1 : 0.45 }}
+              className={`p-1.5 rounded-full ${active ? "bg-indigo-500/80 text-white shadow-md" : "glass text-white/70"}`}
+            >
+              <Icon size={16} />
+            </motion.div>
+          );
+        })}
       </div>
 
-      {!hasAnyData ? (
-        <EmptyState />
-      ) : (
-        <div className="flex-1 overflow-y-auto results-scroll space-y-4 pr-1">
-          {tripCard.destination && <DestinationSection data={tripCard.destination} />}
-          {tripCard.flights && <FlightsSection data={tripCard.flights} />}
-          {tripCard.hotels && <HotelsSection data={tripCard.hotels} />}
-          {tripCard.activities && <ActivitiesSection data={tripCard.activities} />}
-        </div>
-      )}
+      {/* Summary card — full width */}
+      {tripCard.summary && <SummaryCard data={tripCard.summary} />}
+
+      {/* 2×2 grid of detail cards */}
+      <div className="grid grid-cols-2 gap-4 mt-4">
+        {tripCard.destination && <DestinationCard data={tripCard.destination} />}
+        {tripCard.flights && <FlightsCard data={tripCard.flights} />}
+        {tripCard.hotels && <HotelsCard data={tripCard.hotels} />}
+        {tripCard.activities && <ActivitiesCard data={tripCard.activities} />}
+      </div>
     </div>
   );
 }
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
+// ─── Card wrapper ─────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function Card({ title, icon, children }: { title: string; icon: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 opacity-40">
-      <div className="text-6xl">🗺️</div>
-      <p className="text-gray-400 text-lg">Your trip plan will appear here</p>
-      <p className="text-gray-500 text-sm">
-        Start a voice conversation and describe where you want to go
-      </p>
-    </div>
-  );
-}
-
-// ─── Section card wrapper ─────────────────────────────────────────────────────
-
-function SectionCard({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3">
-      <div className="flex items-center gap-2">
-        <span className="text-xl">{icon}</span>
-        <h3 className="font-semibold text-white text-base">{title}</h3>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="glass-card rounded-3xl p-5 w-full"
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <div className="p-1.5 rounded-lg bg-white/40">{icon}</div>
+        <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-700">{title}</h2>
       </div>
       {children}
-    </div>
+    </motion.div>
+  );
+}
+
+// ─── Summary ──────────────────────────────────────────────────────────────────
+
+function SummaryCard({ data }: { data: NonNullable<TripCard["summary"]> }) {
+  return (
+    <Card title="Your Trip Plan ✨" icon={<Sparkles className="text-indigo-500" size={18} />}>
+      <ul className="space-y-2">
+        {(data.bullets ?? []).map((bullet, i) => (
+          <motion.li
+            key={i}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="flex items-start gap-2 text-sm text-gray-700"
+          >
+            <span className="text-indigo-400 font-black text-xs mt-0.5 shrink-0">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span className="leading-snug">{bullet}</span>
+          </motion.li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
 // ─── Destination ──────────────────────────────────────────────────────────────
 
-function DestinationSection({ data }: { data: NonNullable<TripCard["destination"]> }) {
+function DestinationCard({ data }: { data: NonNullable<TripCard["destination"]> }) {
+  const dest = data.destinations?.[0];
+  if (!dest) return null;
   return (
-    <SectionCard title="Destination" icon="🌍">
-      {(data.destinations ?? []).map((dest, i) => (
-        <div key={i} className="space-y-1">
-          <p className="text-white font-medium">{dest.name}</p>
-          <p className="text-gray-400 text-sm leading-relaxed">{dest.summary}</p>
-          {dest.source_url && (
-            <a
-              href={dest.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block text-xs text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Read more →
-            </a>
-          )}
-        </div>
-      ))}
-    </SectionCard>
+    <Card title="Destination 🌍" icon={<MapPin className="text-indigo-500" size={18} />}>
+      <h3 className="font-bold text-lg text-gray-800">{dest.name}</h3>
+      <p className="text-sm text-gray-600 mt-1 leading-relaxed line-clamp-4">{dest.summary}</p>
+      {dest.source_url && (
+        <a
+          href={dest.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center text-indigo-600 text-sm font-medium mt-3 hover:underline"
+        >
+          Read more <ExternalLink size={12} className="ml-1" />
+        </a>
+      )}
+    </Card>
   );
 }
 
 // ─── Flights ──────────────────────────────────────────────────────────────────
 
-function FlightsSection({ data }: { data: NonNullable<TripCard["flights"]> }) {
+function FlightsCard({ data }: { data: NonNullable<TripCard["flights"]> }) {
+  const opt = data.options?.[0];
+  if (!opt) return null;
   return (
-    <SectionCard title="Flights" icon="✈️">
-      {(data.options ?? []).map((opt, i) => (
-        <div key={i} className="space-y-2">
-          <p className="text-white font-medium text-sm">{opt.label}</p>
+    <Card title="Flights ✈️" icon={<Plane className="text-indigo-500" size={18} />}>
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="font-bold text-gray-800">{opt.label}</p>
           {opt.depart_date && (
-            <p className="text-gray-400 text-xs">
+            <p className="text-xs text-gray-700">
               {opt.depart_date} → {opt.return_date}
             </p>
           )}
-          {opt.note && <p className="text-gray-500 text-xs italic">{opt.note}</p>}
-          <a
-            href={opt.skyscanner_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-          >
-            Search Skyscanner →
-          </a>
         </div>
-      ))}
-    </SectionCard>
+      </div>
+      {opt.note && (
+        <p className="text-xs text-gray-600 mt-2 italic line-clamp-2">&ldquo;{opt.note}&rdquo;</p>
+      )}
+      <a
+        href={opt.skyscanner_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full mt-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold flex items-center justify-center hover:bg-indigo-700 transition-colors"
+      >
+        Search Skyscanner →
+      </a>
+    </Card>
   );
 }
 
 // ─── Hotels ───────────────────────────────────────────────────────────────────
 
-function HotelsSection({ data }: { data: NonNullable<TripCard["hotels"]> }) {
+function HotelsCard({ data }: { data: NonNullable<TripCard["hotels"]> }) {
   return (
-    <SectionCard title="Hotels" icon="🏨">
-      <div className="space-y-3">
-        {(data.hotels ?? []).map((hotel, i) => (
-          <div key={i} className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">{hotel.name}</p>
-              {hotel.highlight && (
-                <p className="text-gray-400 text-xs mt-0.5">{hotel.highlight}</p>
-              )}
-            </div>
-            <a
-              href={hotel.booking_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 text-xs bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg transition-colors font-medium"
-            >
-              Book →
-            </a>
+    <Card title="Hotels 🏨" icon={<Hotel className="text-indigo-500" size={18} />}>
+      <div className="space-y-2">
+        {(data.hotels ?? []).slice(0, 3).map((hotel, i) => (
+          <div key={i} className="bg-white/30 p-2 rounded-lg">
+            <p className="text-xs font-bold text-gray-800 truncate">{hotel.name}</p>
+            {hotel.highlight && (
+              <p className="text-[10px] text-gray-700">{hotel.highlight}</p>
+            )}
           </div>
         ))}
       </div>
@@ -169,43 +183,45 @@ function HotelsSection({ data }: { data: NonNullable<TripCard["hotels"]> }) {
           href={data.booking_search_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block text-xs text-gray-400 hover:text-gray-300 transition-colors"
+          className="w-full mt-3 py-2 bg-orange-500 text-white rounded-xl text-sm font-bold flex items-center justify-center hover:bg-orange-600 transition-colors"
         >
-          See all options on Booking.com →
+          Search Booking.com →
         </a>
       )}
-    </SectionCard>
+    </Card>
   );
 }
 
 // ─── Activities ───────────────────────────────────────────────────────────────
 
-function ActivitiesSection({ data }: { data: NonNullable<TripCard["activities"]> }) {
+function ActivitiesCard({ data }: { data: NonNullable<TripCard["activities"]> }) {
   return (
-    <SectionCard title="Activities" icon="🎯">
+    <Card title="Activities 🎯" icon={<Target className="text-indigo-500" size={18} />}>
       <div className="space-y-3">
-        {(data.activities ?? []).map((act, i) => (
-          <div key={i} className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 text-xs font-mono">{String(i + 1).padStart(2, "0")}</span>
-              <p className="text-white text-sm font-medium">{act.name}</p>
-            </div>
-            {act.description && (
-              <p className="text-gray-400 text-xs leading-relaxed pl-7">{act.description}</p>
-            )}
-            {act.source_url && (
+        {(data.activities ?? []).slice(0, 3).map((act, i) => (
+          <div key={i} className="relative pl-5">
+            <span className="absolute left-0 top-0 text-indigo-400 font-black text-sm leading-none">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            {act.source_url ? (
               <a
                 href={act.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block pl-7 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-xs font-bold text-indigo-600 hover:underline truncate block"
               >
-                More info →
+                {act.name}
               </a>
+            ) : (
+              <p className="text-xs font-bold text-gray-800 truncate">{act.name}</p>
+            )}
+            {act.description && (
+              <p className="text-[10px] text-gray-700 mt-0.5 line-clamp-1">{act.description}</p>
             )}
           </div>
         ))}
       </div>
-    </SectionCard>
+      <p className="text-[10px] text-gray-400 mt-2 italic text-center">And more...</p>
+    </Card>
   );
 }
