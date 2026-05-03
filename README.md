@@ -1,6 +1,6 @@
 # Atlas
 
-An AI-powered voice travel planner. Talk to Atlas — a conversational travel agent — and he'll build you a full trip: flights, hotels, activities, and multi-city itineraries, all in real time.
+An AI-powered voice travel planner. Talk to Atlas — a conversational travel agent — and it'll build you a full trip: flights, hotels, activities, and multi-city itineraries, all in real time.
 
 ## What it does
 
@@ -112,6 +112,7 @@ See [AGENT_SETUP.md](./AGENT_SETUP.md) for the full walkthrough. In short:
 4. Add **3 client tools** (React callbacks): `show_trip_section`, `show_transport_leg`, `show_city_segment`
 5. Copy your Agent ID into `.env.local`
 
+NOTE: I did this using the dashboard at the time, but it can be done via the API instead.
 ## How it works
 
 ```
